@@ -2,6 +2,8 @@
 
 A fully client-side web application that parses WhatsApp group chat exports, extracts user activity metrics, and visualizes them over the last 7 days. Designed with a premium dark-mode, glassmorphism aesthetic.
 
+**🚀 Live Demo:** [https://100days-two.vercel.app/](https://100days-two.vercel.app/)
+
 ## Features
 
 - **Privacy-First Data Processing**: Parses and analyzes your chat export entirely in your browser using the File API. No server necessary, no data upload required.
