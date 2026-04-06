@@ -3,9 +3,19 @@
 // Exported object: Analytics -> getMetrics(events)
 
 const Analytics = (() => {
-  // get the last N calendar days present in data
-  function getLastNDays(allDateKeys, n) {
-    return allDateKeys.slice(-n);
+  // get exactly 7 sequential calendar days ending on the most recent message day
+  function getLast7SequentialDays(allDateKeys) {
+    if (allDateKeys.length === 0) return [];
+    const lastDateStr = allDateKeys[allDateKeys.length - 1];
+    const lastDate = new Date(lastDateStr + "T00:00:00");
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(lastDate);
+      d.setDate(d.getDate() - i);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      days.push(iso);
+    }
+    return days;
   }
 
   // format YYYY-MM-DD to "Mon Apr 5"
@@ -24,7 +34,7 @@ const Analytics = (() => {
     const allDateKeys = [...new Set(events.map(e => e.dateKey))].sort();
 
     // window selection
-    const last7Days = getLastNDays(allDateKeys, 7);
+    const last7Days = getLast7SequentialDays(allDateKeys);
     const daySet    = new Set(last7Days);
 
     // track new users (joined / added) per day
