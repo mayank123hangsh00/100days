@@ -45,7 +45,7 @@ The application is built completely dependency-free for structure and styling, m
 ## Project Architecture
 
 ```
-whatsapp-analyzer/
+100days/
 ├── index.html           # Main UI Shell and Entry Point
 ├── css/
 │   └── style.css        # Global CSS variables, custom components, responsive layout
@@ -64,7 +64,7 @@ whatsapp-analyzer/
 Since this app processes everything locally via pure Vanilla web languages, you **do not** need to install Node/NPM. 
 
 1. **Download/Clone the repository** to your local machine.
-2. Open the `whatsapp-analyzer/` folder.
+2. Open the project root folder.
 3. Simply double-click `index.html` to open it in Chrome, Firefox, Safari, or Edge.
 
 ## Exporting Your WhatsApp Chat
