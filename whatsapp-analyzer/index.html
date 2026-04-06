@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Chat Analyzer</title>
+  <meta name="description" content="Analyze your WhatsApp group chat exports. Visualize daily active users, new joiners, and identify your most engaged members over the last 7 days." />
+
+  <!-- Preconnect for Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Custom stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+
+  <!-- Application modules (order matters: parser → analytics → chartRenderer → app) -->
+  <script src="js/parser.js" defer></script>
+  <script src="js/analytics.js" defer></script>
+  <script src="js/chartRenderer.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="hidden" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>Analyzing your chat…</p>
+  </div>
+
+  <!-- Error banner -->
+  <div id="error-banner" class="hidden" role="alert" aria-live="assertive">
+    <span aria-hidden="true">⚠️</span>
+    <span id="error-message"></span>
+    <button id="dismiss-error" aria-label="Dismiss error">✕</button>
+  </div>
+
+  <!-- Main application wrapper -->
+  <div class="app-wrapper">
+
+    <!-- App header -->
+    <header class="app-header">
+      <div class="header-icon" aria-hidden="true">💬</div>
+      <div class="header-text">
+        <h1>WhatsApp Chat Analyzer</h1>
+        <p>Upload a group chat export to visualize activity over the last 7 days</p>
+      </div>
+    </header>
+
+    <!-- Upload section -->
+    <main>
+      <section id="upload-section" aria-label="File upload">
+
+        <div class="upload-container">
+          <div class="upload-headline">
+            <h2>Drop your chat export here</h2>
+            <p>We process your file entirely in the browser — nothing is uploaded to any server.</p>
+          </div>
+
+          <!-- Hidden native file input -->
+          <input
+            type="file"
+            id="file-input"
+            accept=".txt"
+            aria-label="Choose WhatsApp chat export file"
+            class="hidden"
+          />
+
+          <!-- Drag-and-drop zone -->
+          <div
+            id="drop-zone"
+            role="button"
+            tabindex="0"
+            aria-label="Click or drag and drop your WhatsApp .txt export file here"
+          >
+            <span class="drop-icon" aria-hidden="true">📁</span>
+            <p class="drop-title">
+              <span class="drop-highlight">Click to browse</span> or drag & drop
+            </p>
+            <p class="drop-subtitle">Your exported WhatsApp chat .txt file</p>
+            <span class="supported-format">Supported: WhatsApp .txt export</span>
+          </div>
+
+          <!-- How-to guide -->
+          <div class="how-to-card" aria-label="How to export WhatsApp chat">
+            <h3>How to export a WhatsApp chat</h3>
+            <ol class="how-to-steps">
+              <li>
+                <span class="step-num" aria-hidden="true">1</span>
+                Open your WhatsApp group chat
+              </li>
+              <li>
+                <span class="step-num" aria-hidden="true">2</span>
+                Tap the <strong>⋮</strong> menu (Android) or group name (iOS)
+              </li>
+              <li>
+                <span class="step-num" aria-hidden="true">3</span>
+                Select <strong>More → Export Chat</strong>
+              </li>
+              <li>
+                <span class="step-num" aria-hidden="true">4</span>
+                Choose <strong>Without Media</strong> and save the <code>.txt</code> file
+              </li>
+              <li>
+                <span class="step-num" aria-hidden="true">5</span>
+                Upload the saved file above!
+              </li>
+            </ol>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Results section (hidden until data loaded) -->
+      <section id="results-section" class="hidden" aria-label="Analysis results">
+
+        <!-- Results header -->
+        <div class="results-header">
+          <h2>📊 Analysis Results</h2>
+          <div class="file-tag">
+            <span aria-hidden="true">📄</span>
+            <span id="file-name-display" title="">filename.txt</span>
+          </div>
+          <button id="reset-btn" aria-label="Upload a new file">
+            <span aria-hidden="true">↩</span> Upload new file
+          </button>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stats-grid" role="list" aria-label="Summary statistics">
+
+          <div class="stat-card blue" role="listitem">
+            <div class="stat-label">Total Messages</div>
+            <div class="stat-value" id="stat-total-messages" aria-live="polite">0</div>
+          </div>
+
+          <div class="stat-card orange" role="listitem">
+            <div class="stat-label">Unique Senders</div>
+            <div class="stat-value" id="stat-total-users" aria-live="polite">0</div>
+          </div>
+
+          <div class="stat-card purple" role="listitem">
+            <div class="stat-label">Peak Active Day</div>
+            <div class="stat-value small" id="stat-peak-day" aria-live="polite">—</div>
+          </div>
+
+          <div class="stat-card green" role="listitem">
+            <div class="stat-label">Peak Active Users</div>
+            <div class="stat-value" id="stat-peak-count" aria-live="polite">0</div>
+          </div>
+
+          <div class="stat-card teal" role="listitem">
+            <div class="stat-label">Highly Active (≥4 days)</div>
+            <div class="stat-value" id="stat-active-count" aria-live="polite">0</div>
+          </div>
+
+        </div>
+
+        <!-- Activity chart -->
+        <div class="chart-card" aria-label="Daily activity chart — last 7 days">
+          <div class="section-title">Daily Activity — Last 7 Days</div>
+          <p class="section-subtitle">Number of users who sent messages vs. new joiners, per day</p>
+
+          <div class="chart-legend" aria-hidden="true">
+            <div class="legend-item">
+              <span class="legend-dot dot-blue"></span>
+              Active Users (messaging)
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot dot-orange"></span>
+              New Users (joined / added)
+            </div>
+          </div>
+
+          <div class="chart-wrapper">
+            <canvas id="activity-chart" aria-label="Grouped bar chart of active and new users over last 7 days"></canvas>
+          </div>
+        </div>
+
+        <!-- Highly active users -->
+        <div aria-label="Users active 4 or more days">
+          <div class="active-header">
+            <div>
+              <div class="section-title">Highly Active Members</div>
+            </div>
+            <span class="badge-count" id="stat-active-count-badge" aria-live="polite"></span>
+          </div>
+          <p class="section-subtitle">Members who sent messages on <strong>4 or more days</strong> in the last 7 days</p>
+
+          <div id="active-users-grid" role="list" aria-label="Active users list"></div>
+          <p id="no-active-msg" class="hidden" role="status">
+            No users were active on 4+ days in the last 7 days of this chat.
+          </p>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>WhatsApp Chat Analyzer &mdash; All processing is done locally in your browser. No data leaves your device.</p>
+    </footer>
+
+  </div><!-- /app-wrapper -->
+
+</body>
+</html>
